@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Google Cloud Vision API Test</h1>
+    <button onclick="testAPI()">Test API Key</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const apiKey = 'AIzaSyAEZuFlPS76LDzhVJ06RcP-eE53Qim0dg';
+            const url = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
+            
+            // Create a simple test image (1x1 pixel white image)
+            const canvas = document.createElement('canvas');
+            canvas.width = 1;
+            canvas.height = 1;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, 1, 1);
+            
+            const base64Image = canvas.toDataURL('image/jpeg').split(',')[1];
+            
+            const requestBody = {
+                requests: [
+                    {
+                        image: {
+                            content: base64Image
+                        },
+                        features: [
+                            {
+                                type: 'TEXT_DETECTION',
+                                maxResults: 1
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            try {
+                console.log('Testing Google Cloud Vision API...');
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                console.log('Response status:', response.status);
+                const result = await response.text();
+                console.log('Response body:', result);
+                
+                document.getElementById('result').innerHTML = `
+                    <h3>API Test Result:</h3>
+                    <p><strong>Status:</strong> ${response.status}</p>
+                    <p><strong>Response:</strong></p>
+                    <pre>${result}</pre>
+                `;
+                
+            } catch (error) {
+                console.error('Error testing API:', error);
+                document.getElementById('result').innerHTML = `
+                    <h3>API Test Error:</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

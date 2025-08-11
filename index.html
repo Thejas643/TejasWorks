@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VC Extractor - Login</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="login-container" id="loginContainer">
+        <div class="login-card">
+            <h1>VC Extractor</h1>
+            <p class="subtitle">Business Card Scanner & Parser</p>
+            
+            <div class="role-selection" id="roleSelection">
+                <h2>Select Role</h2>
+                <div class="role-buttons">
+                    <button class="role-btn user-btn" onclick="selectRole('user')">User</button>
+                    <button class="role-btn manager-btn" onclick="selectRole('manager')">Manager</button>
+                </div>
+            </div>
+            
+            <div class="login-form" id="loginForm" style="display: none;">
+                <h2 id="loginTitle">User Login</h2>
+                <form id="authForm">
+                    <div class="form-group">
+                        <label for="userId">User ID:</label>
+                        <input type="text" id="userId" name="userId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="login-btn">Login</button>
+                </form>
+                <button class="back-btn" onclick="goBack()">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer" style="display: none;">
+        <header>
+            <h1>VC Extractor</h1>
+            <div class="user-info">
+                <span id="userDisplay">User: </span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </header>
+        
+        <main>
+            <!-- User Section -->
+            <div id="userSection" style="display: none;">
+                <div class="camera-section">
+                    <video id="video" autoplay muted playsinline></video>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                    
+                    <div class="controls">
+                        <button id="scanBtn" class="scan-button">Start Scanning</button>
+                        <button id="captureBtn" class="capture-button" style="display: none;">Capture Image</button>
+                    </div>
+                </div>
+                
+                <div class="results-section" id="resultsSection" style="display: none;">
+                    <h2>Extracted Text</h2>
+                    <div class="text-content" id="extractedText"></div>
+                </div>
+
+                <div class="scan-again-prompt" id="scanAgainPrompt" style="display: none;">
+                    <p>Do you want to scan the back side of the card?</p>
+                    <div class="prompt-buttons">
+                        <button id="scanAgainBtn" class="yes-button">Yes, Scan Again</button>
+                        <button id="finishBtn" class="no-button">No, Finish</button>
+                    </div>
+                </div>
+
+                <div class="final-results" id="finalResults" style="display: none;">
+                    <h3>Complete Card Information</h3>
+                    <div class="final-text" id="finalText"></div>
+                    <button id="newScanBtn" class="new-scan-button">Scan New Card</button>
+                </div>
+
+                <div class="db-success" id="dbSuccess" style="display: none;">
+                    <div class="success-message">
+                        <span class="success-icon">✅</span>
+                        <span>Data stored to database successfully!</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manager Section -->
+            <div id="managerSection" style="display: none;">
+                <div class="manager-header">
+                    <h2>Database Records</h2>
+                    <div id="storageDisplay"></div>
+                    <div class="header-actions">
+                        <div class="search-container">
+                            <div class="search-input-group">
+                                <div class="search-input-wrapper">
+                                    <input type="text" id="nameSearchInput" placeholder="Search by name..." class="search-input">
+                                    <button class="search-btn-magnify" onclick="performSearchWithLoading()" title="Search">
+                                        <span class="search-icon">🔍</span>
+                                    </button>
+                                </div>
+                                <div class="search-input-wrapper">
+                                    <input type="text" id="companySearchInput" placeholder="Search by company..." class="search-input">
+                                    <button class="search-btn-magnify" onclick="performSearchWithLoading()" title="Search">
+                                        <span class="search-icon">🔍</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="refresh-btn" onclick="loadDatabaseRecords()">Refresh Data</button>
+                        <button class="force-refresh-btn" onclick="forceRefreshDatabase()" style="background-color: #6f42c1; margin-left: 10px;">Force Refresh</button>
+                        <button class="cleanup-btn" onclick="cleanupAndRefresh()" style="background-color: #dc3545; margin-left: 10px;">Clean Duplicates</button>
+                        <button class="remove-no-images-btn" onclick="removeRecordsWithoutImages()" style="background-color: #ffc107; margin-left: 10px;">Remove No-Image Records</button>
+
+                        <button class="clear-cache-btn" onclick="vcExtractor.clearAllCacheAndData(); loadDatabaseRecords();" style="background-color: #6c757d; margin-left: 10px;">Clear All Cache & Data</button>
+                        <button class="refresh-storage-btn" onclick="refreshStorageDisplay()" style="background-color: #20c997; margin-left: 10px;">Refresh Storage</button>
+                    </div>
+                </div>
+                
+                <div class="search-results-info" id="searchResultsInfo" style="display: none;">
+                    <span id="searchResultsText"></span>
+                    <button class="clear-search-btn" onclick="clearSearch()">Clear Search</button>
+                </div>
+                
+                <div class="database-records" id="databaseRecords">
+                    <div class="no-records">
+                        <p>No records found in database.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>Processing...</p>
+    </div>
+
+    <div id="searchLoading" class="search-loading" style="display: none;">
+        <div class="search-spinner"></div>
+        <p>Searching...</p>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js?v=3.7"></script>
+</body>
+</html>

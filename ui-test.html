@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VC Extractor - UI Test</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Additional test-specific styles */
+        .test-controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 10000;
+            font-size: 12px;
+        }
+        .test-controls button {
+            margin: 5px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+        }
+        .test-controls button:hover {
+            background: #5a6fd8;
+        }
+        .mock-video {
+            width: 100%;
+            max-width: 600px;
+            height: 400px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            margin: 0 auto;
+        }
+        .mock-image {
+            width: 100%;
+            max-width: 300px;
+            height: 200px;
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9rem;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-controls">
+        <h4>UI Test Controls</h4>
+        <button onclick="showLogin()">Show Login</button>
+        <button onclick="showUserSection()">Show User Section</button>
+        <button onclick="showManagerSection()">Show Manager Section</button>
+        <button onclick="showLoading()">Show Loading</button>
+        <button onclick="hideLoading()">Hide Loading</button>
+        <button onclick="showResults()">Show Results</button>
+        <button onclick="showScanAgain()">Show Scan Again</button>
+        <button onclick="showFinalResults()">Show Final Results</button>
+        <button onclick="showAIFields()">Show AI Fields</button>
+        <button onclick="addMockRecords()">Add Mock Records</button>
+        <button onclick="clearRecords()">Clear Records</button>
+    </div>
+
+    <div class="login-container" id="loginContainer">
+        <div class="login-card">
+            <h1>VC Extractor</h1>
+            <p class="subtitle">Business Card Scanner & Parser</p>
+            
+            <div class="role-selection" id="roleSelection">
+                <h2>Select Role</h2>
+                <div class="role-buttons">
+                    <button class="role-btn user-btn" onclick="selectRole('user')">User</button>
+                    <button class="role-btn manager-btn" onclick="selectRole('manager')">Manager</button>
+                </div>
+            </div>
+            
+            <div class="login-form" id="loginForm" style="display: none;">
+                <h2 id="loginTitle">User Login</h2>
+                <form id="authForm">
+                    <div class="form-group">
+                        <label for="userId">User ID:</label>
+                        <input type="text" id="userId" name="userId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="login-btn">Login</button>
+                </form>
+                <button class="back-btn" onclick="goBack()">Back</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer" style="display: none;">
+        <header>
+            <h1>VC Extractor</h1>
+            <div class="user-info">
+                <span id="userDisplay">User: Test User</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </header>
+        
+        <main>
+            <!-- User Section -->
+            <div id="userSection" style="display: none;">
+                <div class="camera-section">
+                    <div class="mock-video" id="video">
+                        📹 Mock Camera Feed
+                    </div>
+                    <canvas id="canvas" style="display: none;"></canvas>
+                    
+                                         <div class="controls">
+                         <button id="scanBtn" class="scan-button" onclick="mockStartScanning()">Start Scanning</button>
+                         <button id="captureBtn" class="capture-button" style="display: none;" onclick="mockCaptureImage()">Capture Image</button>
+                     </div>
+                </div>
+                
+                <div class="results-section" id="resultsSection" style="display: none;">
+                    <h2>Extracted Text</h2>
+                    <div class="text-content" id="extractedText">
+                        John Doe
+                        Senior Software Engineer
+                        TechCorp Inc.
+                        john.doe@techcorp.com
+                        +1 (555) 123-4567
+                        www.techcorp.com
+                        123 Business Ave, Tech City, TC 12345
+                    </div>
+                </div>
+
+                <div class="scan-again-prompt" id="scanAgainPrompt" style="display: none;">
+                    <p>Do you want to scan the back side of the card?</p>
+                    <div class="prompt-buttons">
+                        <button id="scanAgainBtn" class="yes-button">Yes, Scan Again</button>
+                        <button id="finishBtn" class="no-button">No, Finish</button>
+                    </div>
+                </div>
+
+                <div class="final-results" id="finalResults" style="display: none;">
+                    <h3>Complete Card Information</h3>
+                    <div class="final-text" id="finalText">
+                        FRONT SIDE:
+                        John Doe
+                        Senior Software Engineer
+                        TechCorp Inc.
+                        john.doe@techcorp.com
+                        +1 (555) 123-4567
+                        www.techcorp.com
+                        123 Business Ave, Tech City, TC 12345
+
+                        BACK SIDE:
+                        Additional Services:
+                        • Web Development
+                        • Mobile Apps
+                        • Cloud Solutions
+                        • Consulting
+                    </div>
+                    <button id="newScanBtn" class="new-scan-button">Scan New Card</button>
+                </div>
+
+                <div class="db-success" id="dbSuccess" style="display: none;">
+                    <div class="success-message">
+                        <span class="success-icon">✅</span>
+                        <span>Data stored to database successfully!</span>
+                    </div>
+                </div>
+
+                <div class="ai-classified-fields" id="aiClassifiedFields" style="display: none;">
+                    <h3>AI Classified Fields</h3>
+                    <div class="fields-container">
+                        <div class="field-item">
+                            <strong>Name:</strong> John Doe
+                        </div>
+                        <div class="field-item">
+                            <strong>Designation:</strong> Senior Software Engineer
+                        </div>
+                        <div class="field-item">
+                            <strong>Company:</strong> TechCorp Inc.
+                        </div>
+                        <div class="field-item">
+                            <strong>Email:</strong> john.doe@techcorp.com
+                        </div>
+                        <div class="field-item">
+                            <strong>Phone:</strong> +1 (555) 123-4567
+                        </div>
+                        <div class="field-item">
+                            <strong>Website:</strong> www.techcorp.com
+                        </div>
+                        <div class="field-item">
+                            <strong>Address:</strong> 123 Business Ave, Tech City, TC 12345
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manager Section -->
+            <div id="managerSection" style="display: none;">
+                <div class="manager-header">
+                    <h2>Database Records</h2>
+                    <div class="header-actions">
+                        <div class="search-container">
+                            <div class="search-input-group">
+                                <div class="search-input-wrapper">
+                                    <input type="text" id="nameSearchInput" placeholder="Search by name..." class="search-input">
+                                    <button class="search-btn-magnify" onclick="performSearchWithLoading()" title="Search">
+                                        <span class="search-icon">🔍</span>
+                                    </button>
+                                </div>
+                                <div class="search-input-wrapper">
+                                    <input type="text" id="companySearchInput" placeholder="Search by company..." class="search-input">
+                                    <button class="search-btn-magnify" onclick="performSearchWithLoading()" title="Search">
+                                        <span class="search-icon">🔍</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="refresh-btn" onclick="loadDatabaseRecords()">Refresh Data</button>
+                    </div>
+                </div>
+                
+                <div class="search-results-info" id="searchResultsInfo" style="display: none;">
+                    <span id="searchResultsText"></span>
+                    <button class="clear-search-btn" onclick="clearSearch()">Clear Search</button>
+                </div>
+                
+                <div class="database-records" id="databaseRecords">
+                    <div class="no-records">
+                        <p>No records found in database.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>Processing...</p>
+    </div>
+
+    <div id="searchLoading" class="search-loading" style="display: none;">
+        <div class="search-spinner"></div>
+        <p>Searching...</p>
+    </div>
+
+    <script>
+        // Mock data for testing
+        const mockRecords = [
+            {
+                id: 1,
+                timestamp: new Date().toISOString(),
+                imageData: 'data:image/jpeg;base64,mock-front-image',
+                backImageData: 'data:image/jpeg;base64,mock-back-image',
+                aiData: {
+                    name: "John Doe",
+                    designation: "Senior Software Engineer",
+                    company: "TechCorp Inc.",
+                    tagline: "Innovation at its finest",
+                    contact: {
+                        phone: "+1 (555) 123-4567",
+                        email: "john.doe@techcorp.com",
+                        website: "www.techcorp.com"
+                    },
+                    address: "123 Business Ave, Tech City, TC 12345",
+                    extras: ["Web Development", "Mobile Apps", "Cloud Solutions"]
+                },
+                user: "testuser",
+                isComplete: true
+            },
+            {
+                id: 2,
+                timestamp: new Date(Date.now() - 86400000).toISOString(),
+                imageData: 'data:image/jpeg;base64,mock-front-image-2',
+                aiData: {
+                    name: "Jane Smith",
+                    designation: "Marketing Director",
+                    company: "MarketingPro Solutions",
+                    tagline: "Your success is our mission",
+                    contact: {
+                        phone: "+1 (555) 987-6543",
+                        email: "jane.smith@marketingpro.com",
+                        website: "www.marketingpro.com"
+                    },
+                    address: "456 Marketing Blvd, Ad City, AC 67890",
+                    extras: ["Digital Marketing", "Brand Strategy", "Social Media"]
+                },
+                user: "testuser",
+                isComplete: true
+            }
+        ];
+
+        // Test control functions
+        function showLogin() {
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('appContainer').style.display = 'none';
+        }
+
+        function showUserSection() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('userSection').style.display = 'block';
+            document.getElementById('managerSection').style.display = 'none';
+        }
+
+        function showManagerSection() {
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            document.getElementById('userSection').style.display = 'none';
+            document.getElementById('managerSection').style.display = 'block';
+            loadDatabaseRecords();
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showResults() {
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('scanAgainPrompt').style.display = 'none';
+            document.getElementById('finalResults').style.display = 'none';
+        }
+
+        function showScanAgain() {
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('scanAgainPrompt').style.display = 'block';
+            document.getElementById('finalResults').style.display = 'none';
+        }
+
+        function showFinalResults() {
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('scanAgainPrompt').style.display = 'none';
+            document.getElementById('finalResults').style.display = 'block';
+        }
+
+        function showAIFields() {
+            document.getElementById('aiClassifiedFields').style.display = 'block';
+        }
+
+        function addMockRecords() {
+            localStorage.setItem('vcExtractorRecords', JSON.stringify(mockRecords));
+            if (document.getElementById('managerSection').style.display !== 'none') {
+                loadDatabaseRecords();
+            }
+            alert('Mock records added!');
+        }
+
+        function clearRecords() {
+            localStorage.removeItem('vcExtractorRecords');
+            if (document.getElementById('managerSection').style.display !== 'none') {
+                loadDatabaseRecords();
+            }
+            alert('Records cleared!');
+        }
+
+        // Mock authentication functions
+        function selectRole(role) {
+            document.getElementById('roleSelection').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            
+            const loginTitle = document.getElementById('loginTitle');
+            if (role === 'user') {
+                loginTitle.textContent = 'User Login';
+            } else if (role === 'manager') {
+                loginTitle.textContent = 'Manager Login';
+            }
+        }
+
+        function goBack() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('roleSelection').style.display = 'block';
+        }
+
+        function logout() {
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('loginContainer').style.display = 'flex';
+        }
+
+        // Mock form submission
+        document.addEventListener('DOMContentLoaded', () => {
+            const authForm = document.getElementById('authForm');
+            
+            authForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const userId = document.getElementById('userId').value;
+                const password = document.getElementById('password').value;
+                
+                if (userId && password) {
+                    document.getElementById('userDisplay').textContent = `User: ${userId}`;
+                    document.getElementById('loginContainer').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'block';
+                    
+                    // Show user section by default
+                    document.getElementById('userSection').style.display = 'block';
+                    document.getElementById('managerSection').style.display = 'none';
+                } else {
+                    alert('Please enter both User ID and Password');
+                }
+            });
+        });
+
+        // Mock database functions
+        function loadDatabaseRecords() {
+            const records = JSON.parse(localStorage.getItem('vcExtractorRecords') || '[]');
+            displayRecords(records);
+        }
+
+        function displayRecords(records, isSearch = false, searchTerm = '') {
+            const databaseRecords = document.getElementById('databaseRecords');
+            const searchResultsInfo = document.getElementById('searchResultsInfo');
+            const searchResultsText = document.getElementById('searchResultsText');
+            
+            if (records.length === 0) {
+                databaseRecords.innerHTML = '<div class="no-records"><p>No records found in database.</p></div>';
+                if (isSearch) {
+                    searchResultsInfo.style.display = 'flex';
+                    searchResultsText.textContent = `No results found for "${searchTerm}"`;
+                } else {
+                    searchResultsInfo.style.display = 'none';
+                }
+                return;
+            }
+            
+            let recordsHTML = '';
+            records.forEach((record, index) => {
+                const date = new Date(record.timestamp).toLocaleString();
+                const aiData = record.aiData;
+                
+                const name = aiData.name || 'N/A';
+                const company = aiData.company || 'N/A';
+                const phone = aiData.contact?.phone || 'N/A';
+                const aiDataString = JSON.stringify(aiData, null, 2);
+                
+                const hasBackImage = record.backImageData;
+                
+                const imageSection = hasBackImage ? `
+                    <div class="image-section">
+                        <h4>Business Card Images</h4>
+                        <div class="images-container">
+                            <div class="image-item">
+                                <h5>Front Side</h5>
+                                <div class="mock-image">Front Image</div>
+                                <button class="download-btn" onclick="alert('Download functionality would work here')">
+                                    📥 Download Front Image
+                                </button>
+                            </div>
+                            <div class="image-item">
+                                <h5>Back Side</h5>
+                                <div class="mock-image">Back Image</div>
+                                <button class="download-btn" onclick="alert('Download functionality would work here')">
+                                    📥 Download Back Image
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ` : `
+                    <div class="image-section">
+                        <h4>Business Card Image</h4>
+                        <div class="image-container">
+                            <div class="mock-image">Business Card Image</div>
+                            <button class="download-btn" onclick="alert('Download functionality would work here')">
+                                📥 Download Image
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                recordsHTML += `
+                    <div class="record-card" data-record-id="${record.id}">
+                        <div class="record-header">
+                            <span class="record-id">#${index + 1}</span>
+                            <div class="record-actions">
+                                <button class="toggle-details-btn" onclick="toggleRecordDetails(${record.id})">
+                                    <span class="toggle-icon">📋</span> Details
+                                </button>
+                                <button class="delete-btn" onclick="deleteRecord(${record.id})">
+                                    <span class="delete-icon">🗑️</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="record-summary">
+                            <div class="summary-item">
+                                <strong>Name:</strong> ${name}
+                            </div>
+                            <div class="summary-item">
+                                <strong>Company:</strong> ${company}
+                            </div>
+                            <div class="summary-item">
+                                <strong>Phone:</strong> ${phone}
+                            </div>
+                            <div class="summary-item">
+                                <strong>Date:</strong> ${date}
+                            </div>
+                            ${hasBackImage ? '<div class="summary-item"><strong>Type:</strong> <span style="color: #28a745;">Complete (Front + Back)</span></div>' : ''}
+                        </div>
+                        
+                        <div class="record-details" id="details-${record.id}" style="display: none;">
+                            <div class="details-content">
+                                <div class="ai-data-section">
+                                    <h4>AI Classified Fields</h4>
+                                    <div class="ai-data-content">
+                                        <pre>${aiDataString}</pre>
+                                    </div>
+                                </div>
+                                ${imageSection}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            databaseRecords.innerHTML = recordsHTML;
+            
+            if (isSearch) {
+                searchResultsInfo.style.display = 'flex';
+                searchResultsText.textContent = `Found ${records.length} result(s) for "${searchTerm}"`;
+            } else {
+                searchResultsInfo.style.display = 'none';
+            }
+        }
+
+        function toggleRecordDetails(recordId) {
+            const detailsElement = document.getElementById(`details-${recordId}`);
+            const toggleBtn = event.target.closest('.toggle-details-btn');
+            const toggleIcon = toggleBtn.querySelector('.toggle-icon');
+            
+            if (detailsElement.style.display === 'none') {
+                detailsElement.style.display = 'block';
+                toggleIcon.textContent = '📋';
+                toggleBtn.innerHTML = '<span class="toggle-icon">📋</span> Hide Details';
+            } else {
+                detailsElement.style.display = 'none';
+                toggleIcon.textContent = '📋';
+                toggleBtn.innerHTML = '<span class="toggle-icon">📋</span> Details';
+            }
+        }
+
+        function deleteRecord(recordId) {
+            if (confirm('Are you sure you want to delete this record?')) {
+                let records = JSON.parse(localStorage.getItem('vcExtractorRecords') || '[]');
+                records = records.filter(record => record.id !== recordId);
+                localStorage.setItem('vcExtractorRecords', JSON.stringify(records));
+                loadDatabaseRecords();
+                alert('Record deleted successfully!');
+            }
+        }
+
+        function performSearchWithLoading() {
+            const searchLoading = document.getElementById('searchLoading');
+            searchLoading.style.display = 'flex';
+            
+            setTimeout(() => {
+                searchLoading.style.display = 'none';
+                performSearch();
+            }, 500);
+        }
+
+        function performSearch() {
+            const nameSearchInput = document.getElementById('nameSearchInput');
+            const companySearchInput = document.getElementById('companySearchInput');
+            const nameTerm = nameSearchInput.value.trim().toLowerCase();
+            const companyTerm = companySearchInput.value.trim().toLowerCase();
+            
+            if (nameTerm === '' && companyTerm === '') {
+                loadDatabaseRecords();
+                return;
+            }
+            
+            const allRecords = JSON.parse(localStorage.getItem('vcExtractorRecords') || '[]');
+            const filteredRecords = allRecords.filter(record => {
+                const aiData = record.aiData;
+                const name = (aiData.name || '').toLowerCase();
+                const company = (aiData.company || '').toLowerCase();
+                
+                const nameMatches = nameTerm === '' || name.includes(nameTerm);
+                const companyMatches = companyTerm === '' || company.includes(companyTerm);
+                
+                return nameMatches && companyMatches;
+            });
+            
+            const searchTerms = [];
+            if (nameTerm) searchTerms.push(`name: "${nameTerm}"`);
+            if (companyTerm) searchTerms.push(`company: "${companyTerm}"`);
+            const searchTerm = searchTerms.join(' AND ');
+            
+            displayRecords(filteredRecords, true, searchTerm);
+        }
+
+        function clearSearch() {
+            const nameSearchInput = document.getElementById('nameSearchInput');
+            const companySearchInput = document.getElementById('companySearchInput');
+            nameSearchInput.value = '';
+            companySearchInput.value = '';
+            loadDatabaseRecords();
+        }
+
+                 // Mock scanning functions for UI testing
+         function mockStartScanning() {
+             console.log('Mock: Starting scanning...');
+             document.getElementById('scanBtn').style.display = 'none';
+             document.getElementById('captureBtn').style.display = 'inline-flex';
+             
+             // Change the mock video to show "scanning" state
+             const mockVideo = document.getElementById('video');
+             mockVideo.innerHTML = '📹 Scanning... (Mock Camera Active)';
+             mockVideo.style.background = 'linear-gradient(45deg, #28a745, #20c997)';
+         }
+
+         function mockCaptureImage() {
+             console.log('Mock: Capturing image...');
+             
+             // Show loading
+             document.getElementById('loading').style.display = 'flex';
+             
+             // Simulate processing delay
+             setTimeout(() => {
+                 document.getElementById('loading').style.display = 'none';
+                 
+                 // Hide capture button
+                 document.getElementById('captureBtn').style.display = 'none';
+                 
+                 // Show results
+                 document.getElementById('resultsSection').style.display = 'block';
+                 document.getElementById('scanAgainPrompt').style.display = 'none';
+                 document.getElementById('finalResults').style.display = 'none';
+                 
+                 // Reset video to original state
+                 const mockVideo = document.getElementById('video');
+                 mockVideo.innerHTML = '📹 Mock Camera Feed';
+                 mockVideo.style.background = 'linear-gradient(45deg, #667eea, #764ba2)';
+                 
+                 // Show scan button again for next scan
+                 document.getElementById('scanBtn').style.display = 'inline-flex';
+                 
+                 console.log('Mock: Image captured and processed successfully');
+             }, 2000); // 2 second delay to simulate processing
+         }
+
+         // Initialize with user section
+         showUserSection();
+     </script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple API Test</title>
+</head>
+<body>
+    <h1>Simple API Test</h1>
+    <button onclick="testAPI()">Test API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const apiKey = 'YOUR_NEW_VISION_API_KEY_HERE'; // Replace with your new Vision API key
+            const url = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
+            
+            // Create a simple white image
+            const canvas = document.createElement('canvas');
+            canvas.width = 10;
+            canvas.height = 10;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, 10, 10);
+            
+            const base64Image = canvas.toDataURL('image/jpeg').split(',')[1];
+            
+            const requestBody = {
+                requests: [{
+                    image: { content: base64Image },
+                    features: [{ type: 'TEXT_DETECTION', maxResults: 1 }]
+                }]
+            };
+
+            try {
+                console.log('Testing API...');
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                console.log('Status:', response.status);
+                const result = await response.text();
+                console.log('Result:', result);
+                
+                document.getElementById('result').innerHTML = `
+                    <h3>Status: ${response.status}</h3>
+                    <pre>${result}</pre>
+                `;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `
+                    <h3>Error: ${error.message}</h3>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

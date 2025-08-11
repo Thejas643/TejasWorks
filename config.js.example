@@ -1,0 +1,21 @@
+// Example configuration file for API keys
+// Copy this file to config.js and fill in your actual API keys
+// IMPORTANT: Never commit config.js to version control!
+
+const config = {
+    // Google Cloud Vision API Key
+    // Get this from: https://console.cloud.google.com/
+    GOOGLE_CLOUD_VISION_API_KEY: 'your_google_cloud_vision_api_key_here',
+    
+    // Gemini AI API Key
+    // Get this from: https://makersuite.google.com/app/apikey
+    GEMINI_API_KEY: 'your_gemini_api_key_here'
+};
+
+// Export for use in other files
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = config;
+} else {
+    // For browser usage
+    window.config = config;
+}

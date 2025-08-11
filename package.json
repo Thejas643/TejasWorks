@@ -1,0 +1,16 @@
+{
+  "name": "vc-extractor",
+  "version": "1.0.0",
+  "description": "Business Card Scanner & Parser",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["business-card", "scanner", "ocr", "ai"],
+  "author": "VC Extractor",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

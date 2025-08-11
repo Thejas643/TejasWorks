@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Cloud Vision API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <h1>Google Cloud Vision API Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Simple API Key Test</h2>
+        <button onclick="testSimpleAPI()">Test API Key with Simple Image</button>
+        <div id="simple-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Camera Capture Test</h2>
+        <button onclick="testCameraCapture()">Test Camera Capture</button>
+        <video id="testVideo" width="400" height="300" style="display: none;"></video>
+        <canvas id="testCanvas" style="display: none;"></canvas>
+        <div id="camera-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: File Upload Test</h2>
+        <input type="file" id="fileInput" accept="image/*" onchange="testFileUpload()">
+        <div id="file-result"></div>
+    </div>
+
+    <script>
+        async function testSimpleAPI() {
+            const resultDiv = document.getElementById('simple-result');
+            resultDiv.innerHTML = '<div class="result">Testing API...</div>';
+            
+            const apiKey = 'YOUR_NEW_VISION_API_KEY_HERE'; // Replace with your new Vision API key
+            const url = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
+            
+            // Create a simple test image with text
+            const canvas = document.createElement('canvas');
+            canvas.width = 200;
+            canvas.height = 100;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, 200, 100);
+            ctx.fillStyle = 'black';
+            ctx.font = '16px Arial';
+            ctx.fillText('TEST BUSINESS CARD', 10, 30);
+            ctx.fillText('John Doe', 10, 50);
+            ctx.fillText('Software Engineer', 10, 70);
+            
+            const base64Image = canvas.toDataURL('image/jpeg').split(',')[1];
+            
+            const requestBody = {
+                requests: [
+                    {
+                        image: {
+                            content: base64Image
+                        },
+                        features: [
+                            {
+                                type: 'TEXT_DETECTION',
+                                maxResults: 1
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            try {
+                console.log('Testing Google Cloud Vision API...');
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                console.log('Response status:', response.status);
+                const result = await response.text();
+                console.log('Response body:', result);
+                
+                if (response.ok) {
+                    const data = JSON.parse(result);
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ API Test Successful!</h3>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Detected Text:</strong></p>
+                            <pre>${data.responses[0]?.textAnnotations[0]?.description || 'No text detected'}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ API Test Failed!</h3>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Error:</strong></p>
+                            <pre>${result}</pre>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('Error testing API:', error);
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ API Test Error!</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Type:</strong> ${error.name}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testCameraCapture() {
+            const resultDiv = document.getElementById('camera-result');
+            const video = document.getElementById('testVideo');
+            const canvas = document.getElementById('testCanvas');
+            
+            resultDiv.innerHTML = '<div class="result">Testing camera capture...</div>';
+            
+            try {
+                // Access camera
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                
+                video.srcObject = stream;
+                video.style.display = 'block';
+                
+                // Wait for video to load
+                await new Promise(resolve => {
+                    video.addEventListener('loadedmetadata', resolve);
+                });
+                
+                video.play();
+                
+                // Capture image after 2 seconds
+                setTimeout(async () => {
+                    try {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(video, 0, 0);
+                        
+                        // Stop camera
+                        stream.getTracks().forEach(track => track.stop());
+                        video.style.display = 'none';
+                        
+                        // Convert to base64
+                        const base64Image = canvas.toDataURL('image/jpeg').split(',')[1];
+                        
+                        // Test with Vision API
+                        const apiKey = 'YOUR_NEW_VISION_API_KEY_HERE'; // Replace with your new Vision API key
+                        const url = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
+                        
+                        const requestBody = {
+                            requests: [
+                                {
+                                    image: { content: base64Image },
+                                    features: [{ type: 'TEXT_DETECTION', maxResults: 1 }]
+                                }
+                            ]
+                        };
+                        
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(requestBody)
+                        });
+                        
+                        const result = await response.text();
+                        
+                        if (response.ok) {
+                            const data = JSON.parse(result);
+                            resultDiv.innerHTML = `
+                                <div class="result success">
+                                    <h3>✅ Camera Capture Test Successful!</h3>
+                                    <p><strong>Detected Text:</strong></p>
+                                    <pre>${data.responses[0]?.textAnnotations[0]?.description || 'No text detected'}</pre>
+                                </div>
+                            `;
+                        } else {
+                            resultDiv.innerHTML = `
+                                <div class="result error">
+                                    <h3>❌ Camera Capture Test Failed!</h3>
+                                    <p><strong>Status:</strong> ${response.status}</p>
+                                    <pre>${result}</pre>
+                                </div>
+                            `;
+                        }
+                        
+                    } catch (error) {
+                        resultDiv.innerHTML = `
+                            <div class="result error">
+                                <h3>❌ Camera Capture Error!</h3>
+                                <p><strong>Error:</strong> ${error.message}</p>
+                            </div>
+                        `;
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Camera Access Error!</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testFileUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('file-result');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                resultDiv.innerHTML = '<div class="result error">Please select a file first.</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div class="result">Processing uploaded file...</div>';
+            
+            try {
+                // Convert file to base64
+                const base64Image = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+                
+                // Test with Vision API
+                const apiKey = 'YOUR_NEW_VISION_API_KEY_HERE'; // Replace with your new Vision API key
+                const url = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
+                
+                const requestBody = {
+                    requests: [
+                        {
+                            image: { content: base64Image },
+                            features: [{ type: 'TEXT_DETECTION', maxResults: 1 }]
+                        }
+                    ]
+                };
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const result = await response.text();
+                
+                if (response.ok) {
+                    const data = JSON.parse(result);
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ File Upload Test Successful!</h3>
+                            <p><strong>File:</strong> ${file.name}</p>
+                            <p><strong>Detected Text:</strong></p>
+                            <pre>${data.responses[0]?.textAnnotations[0]?.description || 'No text detected'}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ File Upload Test Failed!</h3>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <pre>${result}</pre>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ File Upload Error!</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
